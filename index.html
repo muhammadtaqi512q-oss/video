@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LYRA – AI Assistant (GitHub DB)</title>
+    <title>LYRA – AI Assistant</title>
     <style>
         /* ─── reset & base ─── */
         * {
@@ -487,20 +487,16 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════
-        //  CONFIG – EDIT THESE RAW URLs TO YOUR GITHUB FILES
+        //  CONFIG – GitHub raw URLs (your repo)
         // ═══════════════════════════════════════════════════════════
+        const BASE_URL = 'https://raw.githubusercontent.com/muhammadtaqi512q-oss/video/main/';
         const DB_URLS = {
-            linksMd: 'https://raw.githubusercontent.com/muhammadtaqi512q-oss/video/main/links.md',
-            data3Json: 'https://raw.githubusercontent.com/muhammadtaqi512q-oss/video/main/data3.json',
-            dataJson: 'https://raw.githubusercontent.com/muhammadtaqi512q-oss/video/main/data.json',
-            elseMd: 'https://raw.githubusercontent.com/muhammadtaqi512q-oss/video/main/else.md',
-            elseJson: 'https://raw.githubusercontent.com/muhammadtaqi512q-oss/video/main/ELSE.json'
+            linksMd: BASE_URL + 'links.md',
+            data3Json: BASE_URL + 'data3.json',
+            dataJson: BASE_URL + 'data.json',
+            elseMd: BASE_URL + 'else.md',
+            elseJson: BASE_URL + 'ELSE.json'
         };
-
-        // ─── Replace with your actual GitHub raw URLs ────────────
-        // Example:
-        // DB_URLS.linksMd = 'https://raw.githubusercontent.com/yourname/repo/main/links.md';
-        // ...
 
         // ═══════════════════════════════════════════════════════════
         //  GLOBALS
@@ -525,7 +521,6 @@
 
         async function fetchAll() {
             try {
-                // Fetch all files in parallel
                 const [linksMdRaw, data3Raw, dataJsonRaw, elseMdRaw, elseJsonRaw] = await Promise.all([
                     fetch(DB_URLS.linksMd).then(r => r.text()),
                     fetch(DB_URLS.data3Json).then(r => r.json()),
@@ -534,15 +529,10 @@
                     fetch(DB_URLS.elseJson).then(r => r.json())
                 ]);
 
-                // Parse links.md
                 db.linksMd = parseLinksMd(linksMdRaw);
-                // Parse data3.json
                 db.data3Json = parseData3Json(data3Raw);
-                // Parse data.json
                 db.dataJson = parseDataJson(dataJsonRaw);
-                // Parse else.md
                 db.elseMd = parseElseMd(elseMdRaw);
-                // else.json is already an array
                 db.elseJson = elseJsonRaw;
 
                 isLoaded = true;
@@ -552,7 +542,6 @@
                 sendBtn.disabled = false;
                 input.focus();
 
-                // Add a ready message
                 addMessage('lyra', '✅ All databases loaded! Ask me anything.');
             } catch (err) {
                 console.error('Fetch error:', err);
@@ -570,12 +559,9 @@
             let currentKeywords = [];
 
             for (const line of lines) {
-                // If line contains '&' and no '<iframe', treat as keyword line
                 if (line.includes('&') && !line.includes('<iframe')) {
-                    // split by &, trim each
                     currentKeywords = line.split('&').map(k => k.trim().toLowerCase());
                 } else if (line.includes('<iframe') && currentKeywords.length) {
-                    // extract src from iframe
                     const srcMatch = line.match(/src="([^"]+)"/);
                     if (srcMatch) {
                         const src = srcMatch[1];
@@ -584,9 +570,7 @@
                             result[kw].push(src);
                         }
                     }
-                }
-                // if line is just a single keyword without & (like "sisters" or "fairy")
-                else if (!line.includes('&') && !line.includes('<iframe') && line.length > 0) {
+                } else if (!line.includes('&') && !line.includes('<iframe') && line.length > 0) {
                     currentKeywords = [line.trim().toLowerCase()];
                 }
             }
@@ -627,12 +611,11 @@
 
         // ─── parse else.md ──────────────────────────────────────
         function parseElseMd(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.includes('<iframe'));
-            return lines;
+            return text.split('\n').map(l => l.trim()).filter(l => l.includes('<iframe'));
         }
 
         // ═══════════════════════════════════════════════════════════
-        //  SEARCH ENGINE (same logic as before, but using db)
+        //  SEARCH ENGINE
         // ═══════════════════════════════════════════════════════════
 
         function normalize(str) {
@@ -853,7 +836,7 @@
         fetchAll();
 
         console.log('✦ LYRA AI Assistant (GitHub DB) - by Muhammad Taqi');
-        console.log('✦ Please set your GitHub raw URLs in the DB_URLS object.');
+        console.log('✦ Using repo: muhammadtaqi512q-oss/video');
     </script>
 
 </body>
