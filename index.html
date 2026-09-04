@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JoyMix - YouTube Style Feed</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #0f0f0f;
+            color: #f1f1f1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Top Bar - YouTube Style Header */
+        header {
+            width: 100%;
+            height: 60px;
+            background: #0f0f0f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-icon {
+            color: #ff0000;
+            font-size: 26px;
+        }
+
+        .creator-link {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .creator-link:hover {
+            background: #ff0000;
+            border-color: #ff0000;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+
+        /* YouTube Topic Chips / Categories Bar */
+        .category-bar {
+            width: 100%;
+            padding: 12px 20px;
+            background: #0f0f0f;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            position: sticky;
+            top: 60px;
+            z-index: 90;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .category-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chip {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f1f1f1;
+            padding: 8px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chip.active, .chip:hover {
+            background: #f1f1f1;
+            color: #0f0f0f;
+        }
+
+        /* YouTube-Like Video/Game Grid */
+        main {
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .grid-feed {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #181818;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .thumbnail {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #282828, #121212);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .thumbnail i {
+            font-size: 48px;
+            color: #ff0000;
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover .thumbnail i {
+            transform: scale(1.15);
+        }
+
+        .badge {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .card-details {
+            padding: 14px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .info h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+
+        .info p {
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        /* YouTube Style Embed Player Window */
+        .player-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .player-container {
+            width: 95%;
+            max-width: 480px;
+            height: 85vh;
+            background: #000;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .close-player {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            color: #fff;
+            font-size: 22px;
+            cursor: pointer;
+            z-index: 1001;
+            background: rgba(0, 0, 0, 0.6);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Bar -->
+    <header>
+        <div class="logo-box">
+            <i class="fa-brands fa-youtube logo-icon"></i> JoyMix
+        </div>
+        <a href="2.html" class="creator-link">
+            <i class="fa-solid fa-circle-user"></i> Created by Muhammad Taqi
+        </a>
+    </header>
+
+    <!-- YouTube Style Category Filter Pills -->
+    <div class="category-bar">
+        <button class="chip active" onclick="filterCategory('all', this)"><i class="fa-solid fa-house"></i> All</button>
+        <button class="chip" onclick="filterCategory('games', this)"><i class="fa-solid fa-gamepad"></i> Games</button>
+        <button class="chip" onclick="filterCategory('videos', this)"><i class="fa-solid fa-film"></i> Videos</button>
+        <button class="chip" onclick="filterCategory('images', this)"><i class="fa-solid fa-image"></i> Images</button>
+        <button class="chip" onclick="filterCategory('poetry', this)"><i class="fa-solid fa-feather"></i> Poetry</button>
+    </div>
+
+    <!-- YouTube Grid Feed -->
+    <main>
+        <div class="grid-feed" id="feedGrid">
+            
+            <!-- Games Cards -->
+            <div class="card item-games" onclick="playContent('games/50.html')">
+                <div class="thumbnail">
+                    <i class="fa-solid fa-gamepad"></i>
+                    <span class="badge">GAME</span>
+                </div>
+                <div class="card-details">
+                    <div class="avatar"><i class="fa-solid fa-trophy"></i></div>
+                    <div class="info">
+                        <h3>50 Game Play</h3>
+                        <p>JoyMix Games • Arcade</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card item-games" onclick="playContent('games/Flappy-Bird.html')">
+                <div class="thumbnail">
+                    <i class="fa-solid fa-crow"></i>
+                    <span class="badge">GAME</span>
+                </div>
+                <div class="card-details">
+                    <div class="avatar"><i class="fa-solid fa-dove"></i></div>
+                    <div class="info">
+                        <h3>Flappy Bird Classic</h3>
+                        <p>JoyMix Games • Tap to Play</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card item-games" onclick="playContent('games/Hill-Climb.html')">
+                <div class="thumbnail">
+                    <i class="fa-solid fa-car"></i>
+                    <span class="badge">GAME</span>
+                </div>
+                <div class="card-details">
+                    <div class="avatar"><i class="fa-solid fa-truck"></i></div>
+                    <div class="info">
+                        <h3>Hill Climb Racing</h3>
+                        <p>JoyMix Games • Adventure</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card item-games" onclick="playContent('games/diano1.html')">
+                <div class="thumbnail">
+                    <i class="fa-solid fa-dragon"></i>
+                    <span class="badge">GAME</span>
+                </div>
+                <div class="card-details">
+                    <div class="avatar"><i class="fa-solid fa-paw"></i></div>
+                    <div class="info">
+                        <h3>Dino Runner v1</h3>
+                        <p>JoyMix Games • Endless</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card item-games" onclick="playContent('games/ludo.html')">
+                <div class="thumbnail">
+                    <i class="fa-solid fa-dice"></i>
+                    <span class="badge">GAME</span>
+                </div>
+                <div class="card-details">
+                    <div class="avatar"><i class="fa-solid fa-dice-four"></i></div>
+                    <div class="info">
+                        <h3>Ludo Multiplayer</h3>
+                        <p>JoyMix Games • Board</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Card -->
+            <div class="card item-videos" onclick="playContent('shorts_player.html')">
+                <div class="thumbnail" style="background: linear-gradient(135deg, #b91c1c, #450a0a);">
+                    <i class="fa-solid fa-circle-play"></i>
+                    <span class="badge" style="background:#ff0000;">SHORTS</span>
+                </div>
+                <div class="card-details">
+                    <div class="avatar"><i class="fa-brands fa-youtube"></i></div>
+                    <div class="info">
+                        <h3>Trending YouTube Shorts Feed</h3>
+                        <p>JoyMix Videos • Dynamic Infinite Stream</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Images & Poetry Cards -->
+            <div class="card item-images" onclick="playContent('image/online.html')">
+                <div class="thumbnail">
+                    <i class="fa-solid fa-globe"></i>
+                    <span class="badge">IMAGE</span>
+                </div>
+                <div class="card-details">
+                    <div class="avatar"><i class="fa-solid fa-camera"></i></div>
+                    <div class="info">
+                        <h3>Online Gallery Stream</h3>
+                        <p>JoyMix Images • Web HD</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card item-poetry" onclick="playContent('image/poetry.html')">
+                <div class="thumbnail">
+                    <i class="fa-solid fa-feather-pointed"></i>
+                    <span class="badge">POETRY</span>
+                </div>
+                <div class="card-details">
+                    <div class="avatar"><i class="fa-solid fa-book-open"></i></div>
+                    <div class="info">
+                        <h3>Urdu & English Poetry Gallery</h3>
+                        <p>JoyMix Poetry • Cards</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card item-images" onclick="playContent('image/offline.html')">
+                <div class="thumbnail">
+                    <i class="fa-solid fa-hard-drive"></i>
+                    <span class="badge">OFFLINE</span>
+                </div>
+                <div class="card-details">
+                    <div class="avatar"><i class="fa-solid fa-box-archive"></i></div>
+                    <div class="info">
+                        <h3>Offline Image Vault</h3>
+                        <p>JoyMix Offline • Folder Storage</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Player Window Modal -->
+    <div class="player-modal" id="playerModal">
+        <div class="player-container">
+            <span class="close-player" onclick="closePlayer()"><i class="fa-solid fa-xmark"></i></span>
+            <iframe id="mainFrame" src=""></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Category Filter
+        function filterCategory(category, el) {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                if (category === 'all') {
+                    card.style.display = 'flex';
+                } else if (card.classList.contains('item-' + category)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Open Content Player
+        function playContent(path) {
+            document.getElementById('mainFrame').src = path;
+            document.getElementById('playerModal').style.display = 'flex';
+        }
+
+        // Close Player
+        function closePlayer() {
+            document.getElementById('mainFrame').src = '';
+            document.getElementById('playerModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
