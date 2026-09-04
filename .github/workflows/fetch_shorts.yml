@@ -31,6 +31,13 @@ jobs:
             "beautiful places shorts" 
             "dramas shorts" 
             "nature shorts"
+             "scenery shorts" 
+            "travel shorts" 
+            "funny shorts" 
+            "gaming shorts" 
+            "trending shorts" 
+            "viral shorts" 
+            "entertainment"
           )
 
           > new_ids.txt
