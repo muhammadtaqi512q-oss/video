@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10K · Infinite Gallery</title>
+    <style>
+        /* ─── Reset & Base ─── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0c0c0e;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ─── Gallery Container ─── */
+        .gallery {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #0c0c0e;
+            overflow: hidden;
+        }
+
+        /* ─── Image Slide ─── */
+        .slide {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: scale(1.04);
+            transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform, opacity;
+            pointer-events: none;
+            background: #0c0c0e;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        .slide.exit {
+            opacity: 0;
+            transform: scale(1.04);
+        }
+
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: brightness(0.92) saturate(1.05);
+        }
+
+        /* ─── Gradient Overlay ─── */
+        .slide::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg,
+                    rgba(0, 0, 0, 0) 50%,
+                    rgba(0, 0, 0, 0.55) 100%);
+            pointer-events: none;
+        }
+
+        /* ─── Image Counter ─── */
+        .counter {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(18px) saturate(1.4);
+            -webkit-backdrop-filter: blur(18px) saturate(1.4);
+            padding: 10px 28px;
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: opacity 0.4s ease;
+        }
+
+        .counter .num {
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            min-width: 36px;
+            text-align: center;
+        }
+
+        .counter .total {
+            opacity: 0.5;
+        }
+
+        .counter .divider {
+            opacity: 0.25;
+        }
+
+        /* ─── Progress Bar ─── */
+        .progress-track {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            z-index: 25;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f093fb, #f5576c, #ffecd2);
+            background-size: 200% 100%;
+            transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* ─── Navigation Buttons ─── */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(14px) saturate(1.3);
+            -webkit-backdrop-filter: blur(14px) saturate(1.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.85);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-50%) scale(1.08);
+            color: #fff;
+        }
+
+        .nav-btn:active {
+            transform: translateY(-50%) scale(0.94);
+        }
+
+        .nav-btn.prev {
+            left: 28px;
+        }
+
+        .nav-btn.next {
+            right: 28px;
+        }
+
+        .nav-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ─── Auto-Play Toggle ─── */
+        .autoplay-btn {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(14px) saturate(1.3);
+            -webkit-backdrop-filter: blur(14px) saturate(1.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.7);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .autoplay-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transform: scale(1.06);
+        }
+
+        .autoplay-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .autoplay-btn .pause-icon {
+            display: none;
+        }
+        .autoplay-btn.playing .play-icon {
+            display: none;
+        }
+        .autoplay-btn.playing .pause-icon {
+            display: block;
+        }
+
+        /* ─── Keyboard Hint ─── */
+        .hint {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            padding: 6px 18px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            white-space: nowrap;
+            transition: opacity 0.8s ease 4s;
+        }
+
+        .hint.hidden {
+            opacity: 0;
+        }
+
+        /* ─── Loading Shimmer ─── */
+        .slide.loading img {
+            opacity: 0;
+        }
+
+        .slide.loading::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #1a1a1e 30%, #2a2a30 60%, #1a1a1e 90%);
+            background-size: 300% 300%;
+            animation: loadingPulse 1.8s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes loadingPulse {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 768px) {
+            .nav-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 18px;
+            }
+
+            .nav-btn.prev {
+                left: 14px;
+            }
+            .nav-btn.next {
+                right: 14px;
+            }
+
+            .counter {
+                bottom: 28px;
+                padding: 8px 20px;
+                font-size: 12px;
+                gap: 8px;
+            }
+
+            .counter .num {
+                font-size: 13px;
+                min-width: 28px;
+            }
+
+            .autoplay-btn {
+                bottom: 28px;
+                right: 20px;
+                width: 38px;
+                height: 38px;
+            }
+
+            .autoplay-btn svg {
+                width: 17px;
+                height: 17px;
+            }
+
+            .hint {
+                display: none;
+            }
+
+            .progress-track {
+                height: 2px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 14px;
+            }
+
+            .nav-btn.prev {
+                left: 10px;
+            }
+            .nav-btn.next {
+                right: 10px;
+            }
+
+            .counter {
+                bottom: 22px;
+                padding: 6px 16px;
+                font-size: 11px;
+                gap: 6px;
+            }
+
+            .counter .num {
+                font-size: 12px;
+                min-width: 24px;
+            }
+
+            .autoplay-btn {
+                bottom: 22px;
+                right: 14px;
+                width: 34px;
+                height: 34px;
+            }
+        }
+
+        /* ─── Scrollbar Hide ─── */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="gallery" id="gallery" role="region" aria-label="Image gallery with 10,000 images">
+
+        <!-- Slides are injected by JS (only 3 DOM elements) -->
+
+        <!-- Progress Bar -->
+        <div class="progress-track" aria-hidden="true">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <!-- Counter -->
+        <div class="counter" aria-live="polite">
+            <span class="num" id="currentNum">1</span>
+            <span class="divider">/</span>
+            <span class="total">10,000</span>
+        </div>
+
+        <!-- Navigation -->
+        <button class="nav-btn prev" id="prevBtn" aria-label="Previous image">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="nav-btn next" id="nextBtn" aria-label="Next image">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+
+        <!-- Auto-Play -->
+        <button class="autoplay-btn playing" id="autoplayBtn" aria-label="Toggle auto-play">
+            <svg class="play-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="pause-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+
+        <!-- Hint -->
+        <div class="hint" id="hint">←  →  ·  Space to pause</div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ─── Config ───
+            const TOTAL = 10000;
+            const IMG_BASE = 'https://picsum.photos/seed/';
+            const IMG_SIZE = '1920/1080';
+            const AUTOPLAY_DELAY = 3200;
+
+            // ─── DOM refs ───
+            const gallery = document.getElementById('gallery');
+            const progressBar = document.getElementById('progressBar');
+            const currentNum = document.getElementById('currentNum');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const autoplayBtn = document.getElementById('autoplayBtn');
+            const hint = document.getElementById('hint');
+
+            // ─── State ───
+            let currentIndex = 0; // logical index (0 .. TOTAL-1)
+            let activePhysicalIdx = 0; // which of the 3 slides is active
+            let slides = [];
+            let isTransitioning = false;
+            let isPlaying = true;
+            let autoplayTimer = null;
+
+            // ─── Helpers ───
+            function getImageUrl(index) {
+                // deterministic seed, unique per index
+                return `${IMG_BASE}gallery_${index}/${IMG_SIZE}`;
+            }
+
+            function formatIndex(i) {
+                return String(i + 1);
+            }
+
+            // ─── Update UI ───
+            function updateCounter(index) {
+                currentNum.textContent = formatIndex(index);
+            }
+
+            function updateProgress(index) {
+                const pct = ((index + 1) / TOTAL) * 100;
+                progressBar.style.width = pct + '%';
+            }
+
+            // ─── Slide Content ───
+            function setSlideContent(slide, index) {
+                const img = slide.querySelector('img');
+                if (index >= 0 && index < TOTAL) {
+                    img.src = getImageUrl(index);
+                    img.alt = `Image ${index + 1} of ${TOTAL}`;
+                    slide.dataset.index = index;
+                    // Show loading shimmer until image loads
+                    slide.classList.add('loading');
+                } else {
+                    img.src = '';
+                    img.alt = '';
+                    slide.classList.remove('loading');
+                }
+            }
+
+            // ─── Create 3 Slides ───
+            function createSlides() {
+                const fragment = document.createDocumentFragment();
+
+                for (let i = 0; i < 3; i++) {
+                    const slide = document.createElement('div');
+                    slide.className = 'slide loading';
+
+                    const img = document.createElement('img');
+                    img.loading = 'lazy';
+                    img.alt = `Image ${i + 1}`;
+
+                    // Remove loading state when image loads
+                    img.addEventListener('load', () => {
+                        slide.classList.remove('loading');
+                    });
+                    img.addEventListener('error', () => {
+                        slide.classList.remove('loading');
+                        // fallback gradient
+                        slide.style.background = 'linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)';
+                    });
+
+                    slide.appendChild(img);
+                    fragment.appendChild(slide);
+                    slides.push(slide);
+                }
+
+                gallery.prepend(fragment);
+
+                // Initial fill: 0, 1, 2
+                setSlideContent(slides[0], 0);
+                setSlideContent(slides[1], 1);
+                setSlideContent(slides[2], 2);
+
+                slides[0].classList.add('active');
+                slides[0].classList.remove('loading');
+                activePhysicalIdx = 0;
+                currentIndex = 0;
+
+                updateCounter(0);
+                updateProgress(0);
+            }
+
+            // ─── Core Navigation ───
+            function goTo(newIndex) {
+                if (isTransitioning) return;
+                if (newIndex < 0 || newIndex >= TOTAL) return;
+                if (newIndex === currentIndex) return;
+
+                isTransitioning = true;
+
+                const oldSlide = slides[activePhysicalIdx];
+                // Pick the next inactive slide (circular buffer)
+                const newPhysicalIdx = (activePhysicalIdx + 1) % 3;
+                const newSlide = slides[newPhysicalIdx];
+
+                // Load the new image into the target slide
+                setSlideContent(newSlide, newIndex);
+
+                // Swap active class
+                oldSlide.classList.remove('active');
+                newSlide.classList.add('active');
+
+                activePhysicalIdx = newPhysicalIdx;
+                currentIndex = newIndex;
+
+                updateCounter(newIndex);
+                updateProgress(newIndex);
+
+                // ── Preload adjacent images into the two inactive slides ──
+                const prevIdx = newIndex - 1;
+                const nextIdx = newIndex + 1;
+
+                // Determine the two inactive physical slots
+                const inactiveA = (activePhysicalIdx + 1) % 3;
+                const inactiveB = (activePhysicalIdx + 2) % 3;
+
+                // Assign prev and next (with bounds safety)
+                if (prevIdx >= 0 && prevIdx < TOTAL) {
+                    setSlideContent(slides[inactiveA], prevIdx);
+                } else {
+                    // if at the edge, just duplicate the current (or keep a valid image)
+                    setSlideContent(slides[inactiveA], newIndex);
+                }
+
+                if (nextIdx >= 0 && nextIdx < TOTAL) {
+                    setSlideContent(slides[inactiveB], nextIdx);
+                } else {
+                    setSlideContent(slides[inactiveB], newIndex);
+                }
+
+                // Unlock after transition
+                setTimeout(() => {
+                    isTransitioning = false;
+                }, 850);
+            }
+
+            function nextSlide() {
+                if (isTransitioning) return;
+                const next = currentIndex + 1;
+                if (next >= TOTAL) {
+                    goTo(0);
+                } else {
+                    goTo(next);
+                }
+            }
+
+            function prevSlide() {
+                if (isTransitioning) return;
+                const prev = currentIndex - 1;
+                if (prev < 0) {
+                    goTo(TOTAL - 1);
+                } else {
+                    goTo(prev);
+                }
+            }
+
+            // ─── Auto-Play ───
+            function startAutoplay() {
+                if (autoplayTimer) clearInterval(autoplayTimer);
+                autoplayTimer = setInterval(nextSlide, AUTOPLAY_DELAY);
+                isPlaying = true;
+                autoplayBtn.classList.add('playing');
+            }
+
+            function stopAutoplay() {
+                if (autoplayTimer) {
+                    clearInterval(autoplayTimer);
+                    autoplayTimer = null;
+                }
+                isPlaying = false;
+                autoplayBtn.classList.remove('playing');
+            }
+
+            function toggleAutoplay() {
+                if (isPlaying) {
+                    stopAutoplay();
+                } else {
+                    startAutoplay();
+                }
+            }
+
+            function resetAutoplay() {
+                if (isPlaying) {
+                    stopAutoplay();
+                    startAutoplay();
+                }
+            }
+
+            // ─── Keyboard ───
+            function handleKeydown(e) {
+                const key = e.key;
+                if (key === 'ArrowLeft') {
+                    e.preventDefault();
+                    prevSlide();
+                    resetAutoplay();
+                } else if (key === 'ArrowRight') {
+                    e.preventDefault();
+                    nextSlide();
+                    resetAutoplay();
+                } else if (key === ' ' || key === 'Space') {
+                    e.preventDefault();
+                    toggleAutoplay();
+                }
+            }
+
+            // ─── Touch / Swipe ───
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isSwiping = false;
+
+            function handleTouchStart(e) {
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                isSwiping = true;
+            }
+
+            function handleTouchEnd(e) {
+                if (!isSwiping) return;
+                isSwiping = false;
+
+                const touch = e.changedTouches[0];
+                const dx = touch.clientX - touchStartX;
+                const dy = touch.clientY - touchStartY;
+
+                if (Math.abs(dx) < 50) return;
+                if (Math.abs(dx) < Math.abs(dy) * 0.6) return;
+
+                if (dx < 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+                resetAutoplay();
+            }
+
+            // ─── Init ───
+            function init() {
+                createSlides();
+
+                // Start autoplay
+                startAutoplay();
+
+                // Event listeners
+                prevBtn.addEventListener('click', () => {
+                    prevSlide();
+                    resetAutoplay();
+                });
+
+                nextBtn.addEventListener('click', () => {
+                    nextSlide();
+                    resetAutoplay();
+                });
+
+                autoplayBtn.addEventListener('click', toggleAutoplay);
+
+                document.addEventListener('keydown', handleKeydown);
+
+                gallery.addEventListener('touchstart', handleTouchStart, { passive: true });
+                gallery.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+                // Hide hint after 6s
+                setTimeout(() => {
+                    hint.classList.add('hidden');
+                }, 6000);
+
+                // Handle visibility change – pause when tab hidden
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden && isPlaying) {
+                        stopAutoplay();
+                    } else if (!document.hidden && !isPlaying) {
+                        // Do not auto-restart if user explicitly paused; they can resume manually
+                    }
+                });
+
+                console.log(`✨ Gallery ready · ${TOTAL} images (3‑slide pool)`);
+            }
+
+            // ─── Start ───
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>
