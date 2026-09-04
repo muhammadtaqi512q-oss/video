@@ -1,0 +1,7 @@
+ "scenery shorts" 
+            "travel shorts" 
+            "funny shorts" 
+            "gaming shorts" 
+            "trending shorts" 
+            "viral shorts" 
+            "entertainment"
