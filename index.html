@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JoyMix - Ultimate Fullscreen Hub</title>
+    <title>JoyMix - Fullscreen YouTube Experience</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -120,7 +120,7 @@
             border-color: #ff0000;
         }
 
-        /* Categories Bar */
+        /* Category Filter Bar */
         .category-bar {
             width: 100%;
             padding: 12px 20px;
@@ -158,7 +158,7 @@
             color: var(--chip-hover-text);
         }
 
-        /* Grid */
+        /* Feed Grid */
         main {
             padding: 20px;
             max-width: 1600px;
@@ -254,7 +254,7 @@
             color: var(--subtext-color);
         }
 
-        /* Direct Mobile Fullscreen Viewer */
+        /* Mobile Fullscreen Viewer */
         .player-modal {
             display: none;
             position: fixed;
@@ -329,7 +329,7 @@
         </div>
     </header>
 
-    <!-- Categories -->
+    <!-- Category Filters -->
     <div class="category-bar">
         <button class="chip active" onclick="filterCategory('all', this)"><i class="fa-solid fa-house"></i> All</button>
         <button class="chip" onclick="filterCategory('games', this)"><i class="fa-solid fa-gamepad"></i> Games</button>
@@ -343,11 +343,10 @@
         <div class="grid-feed" id="feedGrid"></div>
     </main>
 
-    <!-- Mobile Full Screen Viewer -->
+    <!-- Mobile Full Screen Viewport -->
     <div class="player-modal" id="playerModal">
         <div class="player-container">
             <div class="controls-overlay">
-                <!-- Video Next & Prev Buttons -->
                 <span class="action-btn" id="prevBtn" onclick="prevVideo()" style="display: none;" title="Previous Video">
                     <i class="fa-solid fa-arrow-left"></i>
                 </span>
@@ -363,9 +362,23 @@
     </div>
 
     <script>
-        let videoQueue = [];
+        // Direct Video IDs in index.html - Add/Edit YouTube IDs here!
+        const videoQueue = [
+            "CX1ctR2w3Sg",
+            "Q21bc0MKTas",
+            "YHgbRgnOhrro",
+            "dw-2ddjQiWE",
+            "0hZhxselEnk",
+            "TlQqczNNnrE",
+            "hS208QGIv0U",
+            "kSA_SGUvNBU",
+            "9X_nbT89X-c",
+            "FpiuTmYHfls"
+        ];
+
         let currentVideoIndex = -1;
 
+        // Static Local Assets & Games
         const staticItems = [
             { type: 'games', title: '50 Game Classic', path: 'games/50.html', icon: 'fa-trophy', bg: 'fa-gamepad' },
             { type: 'games', title: 'Flappy Bird Arcade', path: 'games/Flappy-Bird.html', icon: 'fa-dove', bg: 'fa-crow' },
@@ -382,6 +395,7 @@
             { type: 'images', title: 'Offline Image Storage', path: 'image/offline.html', icon: 'fa-box-archive', bg: 'fa-hard-drive' }
         ];
 
+        // Theme Switcher
         function toggleTheme() {
             const body = document.body;
             const icon = document.getElementById('themeIcon');
@@ -389,18 +403,12 @@
             icon.className = body.classList.contains('light-theme') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
         }
 
-        async function loadFeed() {
+        // Render Cards
+        function loadFeed() {
             const grid = document.getElementById('feedGrid');
-            try {
-                const response = await fetch('shorts_array.txt');
-                if (response.ok) {
-                    const text = await response.text();
-                    videoQueue = text.replace(/[\[\]\r"]/g, '').split('\n').map(id => id.trim()).filter(id => id.length > 0);
-                }
-            } catch (e) { console.log("Fetch fallback active."); }
-
             let allCards = [];
 
+            // Add Static Items
             staticItems.forEach(item => {
                 allCards.push({
                     category: item.type,
@@ -421,33 +429,33 @@
                 });
             });
 
-            if (videoQueue.length > 0) {
-                videoQueue.forEach((vid, index) => {
-                    const thumbUrl = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
-                    allCards.push({
-                        category: 'videos',
-                        html: `
-                            <div class="card item-videos" onclick="playVideoIndex(${index})">
-                                <div class="thumbnail" style="background-image: url('${thumbUrl}');">
-                                    <i class="fa-solid fa-play play-icon"></i>
-                                    <span class="badge" style="background:#ff0000;">SHORTS</span>
+            // Add Video Items from array
+            videoQueue.forEach((vid, index) => {
+                const thumbUrl = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
+                allCards.push({
+                    category: 'videos',
+                    html: `
+                        <div class="card item-videos" onclick="playVideoIndex(${index})">
+                            <div class="thumbnail" style="background-image: url('${thumbUrl}');">
+                                <i class="fa-solid fa-play play-icon"></i>
+                                <span class="badge" style="background:#ff0000;">SHORTS</span>
+                            </div>
+                            <div class="card-details">
+                                <div class="avatar"><i class="fa-brands fa-youtube"></i></div>
+                                <div class="info">
+                                    <h3>Featured Video #${index + 1}</h3>
+                                    <p>JoyMix Video Stream</p>
                                 </div>
-                                <div class="card-details">
-                                    <div class="avatar"><i class="fa-brands fa-youtube"></i></div>
-                                    <div class="info">
-                                        <h3>Featured Video #${index + 1}</h3>
-                                        <p>JoyMix Videos Feed</p>
-                                    </div>
-                                </div>
-                            </div>`
-                    });
+                            </div>
+                        </div>`
                 });
-            }
+            });
 
             allCards.sort(() => 0.5 - Math.random());
             grid.innerHTML = allCards.map(c => c.html).join('');
         }
 
+        // Filter Categories
         function filterCategory(category, el) {
             document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
@@ -458,7 +466,7 @@
             });
         }
 
-        // Open Game / Image Direct Full Screen
+        // Play Game/Image Directly in Mobile Fullscreen
         function playDirectItem(path) {
             document.getElementById('nextBtn').style.display = 'none';
             document.getElementById('prevBtn').style.display = 'none';
@@ -466,7 +474,7 @@
             document.getElementById('playerModal').style.display = 'flex';
         }
 
-        // Open Video Full Screen with Navigation Controls
+        // Play Video with Navigation Controls
         function playVideoIndex(index) {
             if (index < 0 || index >= videoQueue.length) return;
             currentVideoIndex = index;
