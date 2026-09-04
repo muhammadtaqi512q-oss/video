@@ -1,45 +1,63 @@
-name: Download Offline YouTube Shorts MP4
+name: Auto Fetch 10k Shorts IDs
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Manual trigger button ke liye
+  push:
+    branches: [ main ] # Jab bhi code push ho yeh chal pare
 
 jobs:
-  download-videos:
+  fetch-ids:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install yt-dlp & ffmpeg
+      - name: Install yt-dlp
         run: |
-          sudo apt-get update && sudo apt-get install -y ffmpeg
           sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
 
-      - name: Download Shorts (Max 60 Seconds & Vertical Only)
+      - name: Run Scraping Script
         run: |
-          mkdir -p videos
-          
-          # Max 60 sec duration + Vertical Aspect Ratio (Shorts) + Low storage 480p/720p format
-          yt-dlp --max-downloads 50 \
-            --match-filter "duration <= 60 & height >= width" \
-            -f "b[filesize<15M][ext=mp4]/b[ext=mp4]/best" \
-            -o "videos/%(id)s.mp4" \
-            "ytsearch100:nature shorts"
+          # 1. Existing file se purani IDs Extract karein (Clean raw format mein)
+          > existing_ids.txt
+          if [ -f "shorts_array.txt" ]; then
+              echo "Existing shorts_array.txt found. Preserving old IDs..."
+              sed 's/[",]//g' shorts_array.txt | tr -d ' ' > existing_ids.txt
+          fi
 
-          # Automatically JavaScript Array File Generator
-          echo "const localVideos = [" > video_array.js
-          for file in videos/*.mp4; do
-            if [ -f "$file" ]; then
-              echo "  \"$file\"," >> video_array.js
-            fi
+          # 2. Naye topics aur categories include karein
+          queries=(
+            "beautiful places shorts" 
+            "dramas shorts" 
+            "nature shorts"
+             "scenery shorts" 
+            "travel shorts" 
+            "funny shorts" 
+            "gaming shorts" 
+            "trending shorts" 
+            "viral shorts" 
+            "entertainment"
+          )
+
+          > new_ids.txt
+          for q in "${queries[@]}"; do
+              echo "Fetching from search topic: $q ..."
+              yt-dlp --flat-playlist --playlist-end 2500 --get-id "ytsearch2500:$q" >> new_ids.txt || true
           done
-          echo "];" >> video_array.js
 
-      - name: Commit & Push MP4 Videos
+          # 3. Purani aur Nayi IDs ko merge karein aur duplicates remove karein
+          cat existing_ids.txt new_ids.txt | grep -v '^$' | sort -u | shuf | head -n 10000 | sed 's/.*/"&",/' > shorts_array.txt
+
+          # 4. Temporary cleanup
+          rm -f existing_ids.txt new_ids.txt
+
+          echo "Done! Duplicate-free IDs updated in shorts_array.txt"
+
+      - name: Commit & Push generated shorts_array.txt
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add videos/ video_array.js
-          git commit -m "Auto-download max 60s offline shorts" || exit 0
+          git add shorts_array.txt
+          git commit -m "Auto-append beautiful places, dramas & nature shorts with deduplication" || exit 0
           git push
