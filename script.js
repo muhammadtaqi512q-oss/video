@@ -1,6 +1,6 @@
-{
-  "videos": [
-    "tmPBsWQ3He0",
+// Dynamic YouTube Links / IDs Array (Ab seedha script2 mein store hain)
+const videoLinks = [
+   "tmPBsWQ3He0",
 "LR3N7iAW5uM",
 "eRB5l0qKZEA",
 "QfbRwUxOK0k",
@@ -6477,5 +6477,144 @@
 "jbXKrYWGxYU",
 "2xZANVF3IQk",
 "kq9mjtAW08M"
-  ]
+];
+
+let videoQueue = [];
+let currentVideoIndex = -1;
+
+// Static Local Assets & Games
+const staticItems = [
+    { type: 'games', title: '50 Game Classic', path: 'games/50.html', icon: 'fa-trophy', bg: 'fa-gamepad' },
+    { type: 'games', title: 'Flappy Bird Arcade', path: 'games/Flappy-Bird.html', icon: 'fa-dove', bg: 'fa-crow' },
+    { type: 'games', title: 'Hill Climb Racing', path: 'games/Hill-Climb.html', icon: 'fa-truck', bg: 'fa-car' },
+    { type: 'games', title: 'Dino Runner v1', path: 'games/diano1.html', icon: 'fa-paw', bg: 'fa-dragon' },
+    { type: 'games', title: 'Dino Runner v2', path: 'games/diano2.html', icon: 'fa-dragon', bg: 'fa-dragon' },
+    { type: 'games', title: 'Ludo Star Online', path: 'games/ludo.html', icon: 'fa-dice-four', bg: 'fa-dice' },
+    { type: 'games', title: 'Stickman Hero', path: 'games/stickman.html', icon: 'fa-user-ninja', bg: 'fa-person-running' },
+    { type: 'games', title: 'Rock Paper Scissors', path: 'games/stone-paper-seasor.html', icon: 'fa-hand-back-fist', bg: 'fa-hand' },
+    { type: 'games', title: 'Tic Tac Toe Pro v2', path: 'games/tic-cros-2.html', icon: 'fa-xmark', bg: 'fa-hashtag' },
+    { type: 'games', title: 'Tic Tac Toe Classic', path: 'games/tic-cross.html', icon: 'fa-grip-lines', bg: 'fa-table-cells' },
+    { type: 'images', title: 'Online Gallery Stream', path: 'image/online.html', icon: 'fa-camera', bg: 'fa-globe' },
+    { type: 'poetry', title: 'Poetry Cards & Quotes', path: 'image/poetry.html', icon: 'fa-book-open', bg: 'fa-feather' },
+    { type: 'images', title: 'Offline Image Storage', path: 'image/offline.html', icon: 'fa-box-archive', bg: 'fa-hard-drive' }
+];
+
+// YouTube Links/IDs se Video ID Extract karne ka Function
+function extractVideoID(urlOrId) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = urlOrId.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : urlOrId;
 }
+
+// Theme Switcher
+function toggleTheme() {
+    const body = document.body;
+    const icon = document.getElementById('themeIcon');
+    body.classList.toggle('light-theme');
+    icon.className = body.classList.contains('light-theme') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+
+// Render Cards Feed
+function loadFeed() {
+    const grid = document.getElementById('feedGrid');
+    let allCards = [];
+
+    // Parse Video IDs directly from videoLinks array
+    videoQueue = videoLinks.map(item => extractVideoID(item));
+
+    // Add Static Items
+    staticItems.forEach(item => {
+        allCards.push({
+            category: item.type,
+            html: `
+                <div class="card item-${item.type}" onclick="playDirectItem('${item.path}')">
+                    <div class="thumbnail">
+                        <i class="fa-solid ${item.bg} play-icon"></i>
+                        <span class="badge">${item.type.toUpperCase()}</span>
+                    </div>
+                    <div class="card-details">
+                        <div class="avatar"><i class="fa-solid ${item.icon}"></i></div>
+                        <div class="info">
+                            <h3>${item.title}</h3>
+                            <p>JoyMix • Play Now</p>
+                        </div>
+                    </div>
+                </div>`
+        });
+    });
+
+    // Add Video Items
+    videoQueue.forEach((vid, index) => {
+        const thumbUrl = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
+        allCards.push({
+            category: 'videos',
+            html: `
+                <div class="card item-videos" onclick="playVideoIndex(${index})">
+                    <div class="thumbnail" style="background-image: url('${thumbUrl}');">
+                        <i class="fa-solid fa-play play-icon"></i>
+                        <span class="badge" style="background:#ff0000;">SHORTS</span>
+                    </div>
+                    <div class="card-details">
+                        <div class="avatar"><i class="fa-brands fa-youtube"></i></div>
+                        <div class="info">
+                            <h3>Featured Video #${index + 1}</h3>
+                            <p>JoyMix Video Stream</p>
+                        </div>
+                    </div>
+                </div>`
+        });
+    });
+
+    allCards.sort(() => 0.5 - Math.random());
+    grid.innerHTML = allCards.map(c => c.html).join('');
+}
+
+// Filter Categories
+function filterCategory(category, el) {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.style.display = (category === 'all' || card.classList.contains('item-' + category)) ? 'flex' : 'none';
+    });
+}
+
+// Play Game/Image Directly in Mobile Fullscreen
+function playDirectItem(path) {
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('prevBtn').style.display = 'none';
+    document.getElementById('mainFrame').src = path;
+    document.getElementById('playerModal').style.display = 'flex';
+}
+
+// Play Video with Navigation Controls
+function playVideoIndex(index) {
+    if (index < 0 || index >= videoQueue.length) return;
+    currentVideoIndex = index;
+    document.getElementById('nextBtn').style.display = 'flex';
+    document.getElementById('prevBtn').style.display = 'flex';
+    const vidId = videoQueue[currentVideoIndex];
+    document.getElementById('mainFrame').src = `https://www.youtube.com/embed/${vidId}?autoplay=1`;
+    document.getElementById('playerModal').style.display = 'flex';
+}
+
+function nextVideo() {
+    if (videoQueue.length === 0) return;
+    currentVideoIndex = (currentVideoIndex + 1) % videoQueue.length;
+    playVideoIndex(currentVideoIndex);
+}
+
+function prevVideo() {
+    if (videoQueue.length === 0) return;
+    currentVideoIndex = (currentVideoIndex - 1 + videoQueue.length) % videoQueue.length;
+    playVideoIndex(currentVideoIndex);
+}
+
+function closePlayer() {
+    document.getElementById('mainFrame').src = '';
+    document.getElementById('playerModal').style.display = 'none';
+}
+
+// Start loading the content when DOM is fully loaded
+document.addEventListener('DOMContentLoaded', loadFeed);
