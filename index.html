@@ -2,10 +2,139 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JoyMix - App Loader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JoyMix - Created by Muhammad Taqi</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0f0f0f;
+            color: #f1f1f1;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Mode Selection Screen */
+        #selector-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            background: radial-gradient(circle at center, #1f1f1f 0%, #0f0f0f 100%);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .brand-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #ffffff;
+            letter-spacing: -1px;
+        }
+
+        .brand-title span {
+            color: #ff0000;
+        }
+
+        .creator-tag {
+            font-size: 0.95rem;
+            color: #aaa;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            background: #181818;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 20px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 180px;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-50px);
+            border-color: #ff0000;
+            box-shadow: 0 8px 25px rgba(255, 0, 0, 0.3);
+        }
+
+        .mode-btn.online-btn:hover {
+            background: #ff0000;
+        }
+
+        .mode-btn.offline-btn:hover {
+            background: #333333;
+        }
+
+        /* Fullscreen Containers */
+        #online-frame-container, #offline-container {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        iframe.full-page-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Back to Menu Button for Online Frame */
+        .back-to-menu {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 0, 0, 0.85);
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            transition: transform 0.2s;
+        }
+
+        .back-to-menu:hover {
+            transform: scale(1.05);
+            background: #ff0000;
+        }
+
+        /* Offline Template Custom Internal Styles */
         :root {
             --bg-color: #0f0f0f;
             --card-bg: #181818;
@@ -30,74 +159,10 @@
             --shadow-color: rgba(0, 0, 0, 0.15);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
-            user-select: none;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        body {
+        #offline-container {
             background-color: var(--bg-color);
             color: var(--text-color);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
-
-        /* 5-Second Splash Loader */
-        #splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #0f0f0f;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            flex-direction: column;
-        }
-
-        #splash-screen img {
-            width: 120px;
-            height: 120px;
-            object-fit: contain;
-            animation: pulse 1.5s infinite ease-in-out;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.8; }
-        }
-
-        /* Online Fullscreen Frame Wrapper */
-        #online-frame-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 5000;
-            background: #000;
-        }
-
-        #online-frame-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* Offline App UI Styling */
-        #offline-app {
-            display: none;
-            width: 100%;
+            overflow-y: auto;
         }
 
         header {
@@ -229,6 +294,7 @@
             display: flex;
             flex-direction: column;
             border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .card:hover {
@@ -239,8 +305,6 @@
         .thumbnail {
             width: 100%;
             height: 180px;
-            background-size: cover;
-            background-position: center;
             position: relative;
             display: flex;
             justify-content: center;
@@ -292,10 +356,6 @@
             color: var(--text-color);
             line-height: 1.3;
             margin-bottom: 4px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
         }
 
         .info p {
@@ -345,7 +405,6 @@
             justify-content: center;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
         .action-btn:active {
@@ -356,24 +415,35 @@
 </head>
 <body>
 
-    <div id="splash-screen">
-        <img src="icon.png" alt="Loading Icon" onerror="this.src='https://via.placeholder.com/120?text=JoyMix'">
+    <div id="selector-screen">
+        <h1 class="brand-title">Joy<span>Mix</span></h1>
+        <div class="creator-tag"><i class="fa-solid fa-code"></i> Created by Muhammad Taqi</div>
+        
+        <div class="btn-container">
+            <button class="mode-btn online-btn" onclick="launchOnline()">
+                <i class="fa-solid fa-globe"></i> Online
+            </button>
+            <button class="mode-btn offline-btn" onclick="launchOffline()">
+                <i class="fa-solid fa-wifi-slash"></i> Offline
+            </button>
+        </div>
     </div>
 
     <div id="online-frame-container">
-        <iframe id="onlineFrame" src="" allow="autoplay; encrypted-media; camera; microphone; geolocation" allowfullscreen></iframe>
+        <button class="back-to-menu" onclick="resetToMenu()"><i class="fa-solid fa-house"></i> Main Menu</button>
+        <iframe id="online-iframe" class="full-page-frame" src="" allowfullscreen></iframe>
     </div>
 
-    <div id="offline-app">
+    <div id="offline-container">
         <header>
-            <a href="2.html" class="logo-box">
+            <a href="#" onclick="resetToMenu()" class="logo-box">
                 <i class="fa-brands fa-youtube logo-icon"></i> JoyMix
             </a>
             <div class="header-actions">
                 <div class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
                     <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </div>
-                <a href="2.html" class="creator-link">
+                <a href="#" onclick="resetToMenu()" class="creator-link">
                     <i class="fa-solid fa-circle-user"></i> Created by Muhammad Taqi
                 </a>
             </div>
@@ -403,28 +473,27 @@
     </div>
 
     <script>
-        // Detection Logic on Startup
-        window.addEventListener('DOMContentLoaded', () => {
-            const onlineUrl = "https://muhammadtaqi512q-oss.github.io/video/";
-            
-            setTimeout(() => {
-                document.getElementById('splash-screen').style.display = 'none';
-                
-                if (navigator.onLine) {
-                    // Online Mode
-                    const frameContainer = document.getElementById('online-frame-container');
-                    const onlineFrame = document.getElementById('onlineFrame');
-                    onlineFrame.src = onlineUrl;
-                    frameContainer.style.display = 'block';
-                } else {
-                    // Offline Mode
-                    document.getElementById('offline-app').style.display = 'block';
-                    loadFeed();
-                }
-            }, 5000);
-        });
+        // Navigation Logic
+        function launchOnline() {
+            document.getElementById('selector-screen').style.display = 'none';
+            document.getElementById('online-frame-container').style.display = 'block';
+            document.getElementById('online-iframe').src = 'https://joymix1.oneapp.dev/';
+        }
 
-        // Offline App Assets Logic
+        function launchOffline() {
+            document.getElementById('selector-screen').style.display = 'none';
+            document.getElementById('offline-container').style.display = 'block';
+            loadFeed();
+        }
+
+        function resetToMenu() {
+            document.getElementById('online-iframe').src = '';
+            document.getElementById('online-frame-container').style.display = 'none';
+            document.getElementById('offline-container').style.display = 'none';
+            document.getElementById('selector-screen').style.display = 'flex';
+        }
+
+        // Static Local Assets & Games Data
         const staticItems = [
             { type: 'games', title: '50 Game Classic', path: 'games/50.html', icon: 'fa-trophy', bg: 'fa-gamepad' },
             { type: 'games', title: 'Flappy Bird Arcade', path: 'games/Flappy-Bird.html', icon: 'fa-dove', bg: 'fa-crow' },
@@ -440,6 +509,7 @@
             { type: 'images', title: 'Offline Image Storage', path: 'image/offline.html', icon: 'fa-box-archive', bg: 'fa-hard-drive' }
         ];
 
+        // Theme Switcher
         function toggleTheme() {
             const body = document.body;
             const icon = document.getElementById('themeIcon');
@@ -447,6 +517,7 @@
             icon.className = body.classList.contains('light-theme') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
         }
 
+        // Render Feed Cards
         function loadFeed() {
             const grid = document.getElementById('feedGrid');
             let allCards = [];
@@ -475,6 +546,7 @@
             grid.innerHTML = allCards.map(c => c.html).join('');
         }
 
+        // Filter Categories
         function filterCategory(category, el) {
             document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
@@ -485,6 +557,7 @@
             });
         }
 
+        // Play Item Directly
         function playDirectItem(path) {
             document.getElementById('mainFrame').src = path;
             document.getElementById('playerModal').style.display = 'flex';
